@@ -50,11 +50,14 @@ class PanasonicBluRayRemote(CoordinatorEntity[PanasonicCoordinator], RemoteEntit
         "POWER", "POWERON", "POWEROFF",
         # Playback
         "PLAY", "PLAYBACK", "PAUSE", "STOP",
+        "MEDIA_PLAY", "MEDIA_PAUSE", "MEDIA_PLAY_PAUSE", "MEDIA_STOP",
         # Navigation
         "UP", "DOWN", "LEFT", "RIGHT", "SELECT", "OK", "RETURN", "BACK",
+        "DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT", "DPAD_CENTER",
         "EXIT", "HOME", "MENU", "TITLE", "POPUP", "PUPMENU", "SETUP",
         # Skip / Chapter
         "SKIPFWD", "SKIPREV", "NEXT", "PREV", "PREVIOUS",
+        "MEDIA_NEXT", "MEDIA_PREVIOUS",
         # Fast Forward
         "CUE", "FF",
         "SEARCH_FWD1", "SEARCH_FWD2", "SEARCH_FWD3", "SEARCH_FWD4", "SEARCH_FWD5",

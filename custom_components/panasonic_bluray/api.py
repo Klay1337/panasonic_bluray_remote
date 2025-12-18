@@ -72,12 +72,21 @@ class PanasonicBlurayAPI:
         "PLAY": "cCMD_RC_PLAYBACK",
         "PAUSE": "cCMD_RC_PAUSE",
         "STOP": "cCMD_RC_STOP",
+        "MEDIA_PLAY": "cCMD_RC_PLAYBACK",
+        "MEDIA_PAUSE": "cCMD_RC_PAUSE",
+        "MEDIA_PLAY_PAUSE": "cCMD_RC_PAUSE",
+        "MEDIA_STOP": "cCMD_RC_STOP",
 
         # Navigation
         "UP": "cCMD_RC_UP",
         "DOWN": "cCMD_RC_DOWN",
         "LEFT": "cCMD_RC_LEFT",
         "RIGHT": "cCMD_RC_RIGHT",
+        "DPAD_UP": "cCMD_RC_UP",
+        "DPAD_DOWN": "cCMD_RC_DOWN",
+        "DPAD_LEFT": "cCMD_RC_LEFT",
+        "DPAD_RIGHT": "cCMD_RC_RIGHT",
+        "DPAD_CENTER": "cCMD_RC_SELECT",
         "SELECT": "cCMD_RC_SELECT",
         "OK": "cCMD_RC_SELECT",
         "RETURN": "cCMD_RC_RETURN",
@@ -96,6 +105,8 @@ class PanasonicBlurayAPI:
         "NEXT": "cCMD_RC_SKIPFWD",
         "PREV": "cCMD_RC_SKIPREV",
         "PREVIOUS": "cCMD_RC_SKIPREV",
+        "MEDIA_NEXT": "cCMD_RC_SKIPFWD",
+        "MEDIA_PREVIOUS": "cCMD_RC_SKIPREV",
 
         # Fast Forward
         "CUE": "cCMD_RC_CUE",
