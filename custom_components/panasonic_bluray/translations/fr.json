@@ -11,13 +11,8 @@
       "user": {
         "data": {
           "host": "Hôte"
-        }
-      },
-      "zeroconf_confirm": {
-        "data": {
-          "host": "Hôte"
         },
-        "title": "Lecteur Panasonic"
+        "description": "Entrez l'adresse IP de votre lecteur Blu-ray Panasonic."
       }
     }
   },
@@ -25,8 +20,9 @@
     "step": {
       "init": {
         "data": {
-          "host": "Hôte"
-        }
+          "scan_interval": "Intervalle de mise à jour (secondes)"
+        },
+        "description": "Configurez l'intervalle de mise à jour du statut. Des valeurs plus basses offrent des mises à jour plus réactives mais augmentent le trafic réseau."
       }
     }
   }

@@ -1,4 +1,5 @@
-"""Config flow for Unfolded Circle Remote integration."""
+"""Config flow for Panasonic Blu-ray integration."""
+from __future__ import annotations
 
 import logging
 from typing import Any
@@ -7,34 +8,45 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
 from homeassistant.const import CONF_HOST
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-from panacotta import PanasonicBD
 
-from .const import DOMAIN, DEFAULT_DEVICE_NAME
+from .api import PanasonicBlurayAPI
+from .const import (
+    DOMAIN,
+    DEFAULT_DEVICE_NAME,
+    DEFAULT_SCAN_INTERVAL,
+    MIN_SCAN_INTERVAL,
+    MAX_SCAN_INTERVAL,
+    CONF_SCAN_INTERVAL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema({vol.Required(CONF_HOST): str})
 
+
 def validate_input(user_input: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect.
+
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
     config = {}
-    _LOGGER.debug("Sony device user input %s", user_input)
-    panasonic_device = PanasonicBD(user_input[CONF_HOST])
-    state = panasonic_device.get_status()
-    if state[0] == "error":
-        config = {"error": f"Could not connect to Panasonic device with {user_input[CONF_HOST]}"}
-        _LOGGER.error("Could not connect to Panasonic device with %s", user_input[CONF_HOST])
+    _LOGGER.debug("Panasonic device user input %s", user_input)
+    panasonic_api = PanasonicBlurayAPI(user_input[CONF_HOST])
+    status = panasonic_api.get_player_status()
+
+    if status is None:
+        config = {"error": f"Could not connect to Panasonic device at {user_input[CONF_HOST]}"}
+        _LOGGER.error("Could not connect to Panasonic device at %s", user_input[CONF_HOST])
 
     config.update(user_input)
     return config
 
 
 class PanasonicConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Panasonic."""
+    """Handle a config flow for Panasonic Blu-ray."""
 
     VERSION = 1
     MINOR_VERSION = 1
@@ -44,11 +56,17 @@ class PanasonicConfigFlow(ConfigFlow, domain=DOMAIN):
     user_input: dict[str, Any] | None = None
 
     def __init__(self) -> None:
-        """Sony Config Flow."""
+        """Initialize Panasonic Config Flow."""
         self.discovery_info: dict[str, Any] = {}
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        """Get the options flow for this handler."""
+        return PanasonicOptionsFlowHandler(config_entry)
+
     async def async_step_user(
-            self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
@@ -84,7 +102,7 @@ class PanasonicConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
 
-class PanasonicDeviceOptionsFlowHandler(OptionsFlow):
+class PanasonicOptionsFlowHandler(OptionsFlow):
     """Handle Panasonic options."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:
@@ -92,15 +110,32 @@ class PanasonicDeviceOptionsFlowHandler(OptionsFlow):
         self.config_entry = config_entry
 
     async def async_step_init(
-            self, user_input: dict[str, int] | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Manage Unfolded Circle options."""
+        """Manage Panasonic options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
+        # Get current value or default
+        current_interval = self.config_entry.options.get(
+            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+        )
+
+        options_schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_SCAN_INTERVAL,
+                    default=current_interval,
+                ): vol.All(
+                    vol.Coerce(int),
+                    vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
+                ),
+            }
+        )
+
         return self.async_show_form(
             step_id="init",
-            data_schema=STEP_USER_DATA_SCHEMA,
+            data_schema=options_schema,
         )
 
 

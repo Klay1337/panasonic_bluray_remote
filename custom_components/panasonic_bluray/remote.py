@@ -1,144 +1,158 @@
-"""Support for Panasonic Blu-ray players."""
+"""Support for Panasonic Blu-ray remote entity."""
 from __future__ import annotations
 
+import logging
 import time
-from typing import Iterable, Any
+from typing import Any, Iterable
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
-from homeassistant.components.media_player import (
-    MediaPlayerState
-)
-
+from homeassistant.components.media_player import MediaPlayerState
 from homeassistant.components.remote import (
     ATTR_DELAY_SECS,
-    ATTR_HOLD_SECS,
     ATTR_NUM_REPEATS,
     DEFAULT_DELAY_SECS,
-    DEFAULT_HOLD_SECS,
     DEFAULT_NUM_REPEATS,
     RemoteEntity,
     RemoteEntityFeature,
-    ENTITY_ID_FORMAT
+    ENTITY_ID_FORMAT,
 )
-
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-import logging
-
-from .const import PANASONIC_COORDINATOR, DOMAIN, DEFAULT_DEVICE_NAME
+from .const import PANASONIC_COORDINATOR, DOMAIN, MANUFACTURER
 from .coordinator import PanasonicCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = "Panasonic Blu-Ray remote"
 
 async def async_setup_entry(
-        hass: HomeAssistant,
-        config_entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback,
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Use to setup entity."""
+    """Set up Panasonic Blu-ray remote entity."""
     _LOGGER.debug("Panasonic async_add_entities remote")
     coordinator = hass.data[DOMAIN][config_entry.entry_id][PANASONIC_COORDINATOR]
-    async_add_entities(
-        [PanasonicBluRayRemote(coordinator, coordinator.name)]
-    )
+    async_add_entities([PanasonicBluRayRemote(coordinator, coordinator.name)])
 
 
 class PanasonicBluRayRemote(CoordinatorEntity[PanasonicCoordinator], RemoteEntity):
-    """Representation of a Panasonic Blu-ray device."""
+    """Representation of a Panasonic Blu-ray remote."""
 
-    _attr_icon = "mdi:disc-player"
+    _attr_icon = "mdi:remote"
     _attr_supported_features: RemoteEntityFeature = RemoteEntityFeature(0)
 
-    def __init__(self, coordinator, name):
-        """Initialize the Panasonic Blue-ray remote entity."""
+    # All available commands that can be sent via remote.send_command
+    AVAILABLE_COMMANDS = [
+        # Power
+        "POWER", "POWERON", "POWEROFF",
+        # Playback
+        "PLAY", "PLAYBACK", "PAUSE", "STOP",
+        # Navigation
+        "UP", "DOWN", "LEFT", "RIGHT", "SELECT", "OK", "RETURN", "BACK",
+        "EXIT", "HOME", "MENU", "TITLE", "POPUP", "PUPMENU", "SETUP",
+        # Skip / Chapter
+        "SKIPFWD", "SKIPREV", "NEXT", "PREV", "PREVIOUS",
+        # Fast Forward
+        "CUE", "FF",
+        "SEARCH_FWD1", "SEARCH_FWD2", "SEARCH_FWD3", "SEARCH_FWD4", "SEARCH_FWD5",
+        # Rewind
+        "REV", "REW",
+        "SEARCH_REV1", "SEARCH_REV2", "SEARCH_REV3", "SEARCH_REV4", "SEARCH_REV5",
+        # Slow Motion
+        "SLOW_FWD1", "SLOW_FWD2", "SLOW_FWD3", "SLOW_FWD4", "SLOW_FWD5",
+        # Frame Advance
+        "FRAMEADV", "REVERSEFRAMEADV",
+        # Tray
+        "OP_CL", "EJECT", "TRAYOPEN", "TRAYCLOSE",
+        # Color buttons
+        "RED", "GREEN", "YELLOW", "BLUE",
+        # Numbers
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+        "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9",
+        # Audio/Video settings
+        "AUDIOSEL", "AUDIO", "SUB_TITLE", "SUBTITLE", "DETAIL", "INFO",
+        "DSPSEL", "DISPLAY", "OSDONOFF", "3D", "PICTMD",
+        "PICTURESETTINGS", "HDR_PICTUREMODE",
+        # Apps
+        "NETFLIX", "NETWORK", "MIRACAST",
+    ]
+
+    def __init__(self, coordinator: PanasonicCoordinator, name: str) -> None:
+        """Initialize the Panasonic Blu-ray remote entity."""
         super().__init__(coordinator)
         self.coordinator = coordinator
-        self._attr_name = name
-        self._attr_media_position_updated_at = None
-        self._state : MediaPlayerState | None = None
-        self._attr_name = name
-        self._attr_media_position = 0
-        self._attr_media_duration = 0
-        self._unique_id = ENTITY_ID_FORMAT.format(
-            f"{self.coordinator.api._host}_Remote")
+        self._attr_name = f"{name} Remote"
+        self._state: MediaPlayerState | None = None
+        self._unique_id = ENTITY_ID_FORMAT.format(f"{self.coordinator.api.host}_Remote")
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            identifiers={
-                # Mac address is unique identifiers within a specific domain
-                (DOMAIN, self.coordinator.api._host)
-            },
+            identifiers={(DOMAIN, self.coordinator.api.host)},
             name=self.coordinator.name,
-            manufacturer="Panasonic",
-            model=self.coordinator.name
+            manufacturer=MANUFACTURER,
+            model="Blu-ray Player",
         )
 
     @property
     def unique_id(self) -> str | None:
+        """Return unique ID."""
         return self._unique_id
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the device is on."""
+        data = self.coordinator.data
+        if not data:
+            return None
+        return data.get("is_on")
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        # Update only if activity changed
-        self.update()
         self.async_write_ha_state()
-        return super()._handle_coordinator_update()
-
-    def update(self) -> None:
-        """Update the internal state by querying the device."""
-        data = self.coordinator.data
-        self._attr_state = data.get("state", None)
-        self._attr_media_position = data.get("media_position", None)
-        self._attr_media_position_updated_at = data.get("media_position_updated_at", None)
-        self._attr_media_duration = data.get("media_duration", None)
 
     def turn_off(self) -> None:
-        """Instruct the device to turn standby.
-
-        Sending the "POWER" button will turn the device to standby - there
-        is no way to turn it completely off remotely. However this works in
-        our favour as it means the device is still accepting commands and we
-        can thus turn it back on when desired.
-        """
-        if self._attr_state != MediaPlayerState.OFF:
-            self.coordinator.api.send_key("POWER")
-
-        self._attr_state = MediaPlayerState.OFF
+        """Turn the device to standby."""
+        self.coordinator.api.power_off()
 
     def turn_on(self) -> None:
-        """Wake the device back up from standby."""
-        if self._attr_state == MediaPlayerState.OFF:
-            self.coordinator.api.send_key("POWER")
+        """Wake the device from standby."""
+        self.coordinator.api.power_on()
 
-        self._attr_state = MediaPlayerState.IDLE
-
-    def toggle(self, activity: str = None, **kwargs):
-        """Toggle a device."""
-        self.coordinator.api.send_key("POWER")
+    def toggle(self, activity: str | None = None, **kwargs: Any) -> None:
+        """Toggle the device power."""
+        self.coordinator.api.send_command("POWER")
 
     def send_command(self, command: Iterable[str], **kwargs: Any) -> None:
-        """Send commands to one device."""
+        """Send commands to the device.
+
+        Available commands include:
+        - Power: POWER, POWERON, POWEROFF
+        - Playback: PLAY, PAUSE, STOP
+        - Navigation: UP, DOWN, LEFT, RIGHT, SELECT, OK, RETURN, MENU, HOME, etc.
+        - Skip: SKIPFWD, SKIPREV, NEXT, PREV
+        - Speed: CUE, REV, SEARCH_FWD1-5, SEARCH_REV1-5, SLOW_FWD1-5
+        - Tray: EJECT, TRAYOPEN, TRAYCLOSE, OP_CL
+        - Numbers: 0-9 or D0-D9
+        - Colors: RED, GREEN, YELLOW, BLUE
+        - Audio/Video: AUDIO, SUBTITLE, INFO, DISPLAY, 3D, HDR_PICTUREMODE
+        - Apps: NETFLIX, NETWORK, MIRACAST
+        """
         num_repeats = kwargs.get(ATTR_NUM_REPEATS, DEFAULT_NUM_REPEATS)
         delay_secs = kwargs.get(ATTR_DELAY_SECS, DEFAULT_DELAY_SECS)
-        hold_secs = kwargs.get(ATTR_HOLD_SECS, DEFAULT_HOLD_SECS)
 
         for _ in range(num_repeats):
             for single_command in command:
-                # Not supported : hold and release modes
-                # if hold_secs > 0:
-                #     self._device.send_key(single_command)
-                #     time.sleep(hold_secs)
-                # else:
-                results = self.coordinator.api.send_key(single_command)
-                _LOGGER.debug("send_command %s %d repeats %d delay : %s", ''.join(list(command)),
-                              num_repeats, delay_secs, results[0])
+                success, code = self.coordinator.api.send_command(single_command)
+                _LOGGER.debug(
+                    "send_command %s: %s (code=%s)",
+                    single_command,
+                    "OK" if success else "FAIL",
+                    code,
+                )
                 time.sleep(delay_secs)

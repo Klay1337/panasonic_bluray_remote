@@ -11,13 +11,8 @@
       "user": {
         "data": {
           "host": "Host"
-        }
-      },
-      "zeroconf_confirm": {
-        "data": {
-          "host": "Host"
         },
-        "title": "Panasonic device"
+        "description": "Enter the IP address of your Panasonic Blu-ray player."
       }
     }
   },
@@ -25,8 +20,9 @@
     "step": {
       "init": {
         "data": {
-          "host": "Host"
-        }
+          "scan_interval": "Polling interval (seconds)"
+        },
+        "description": "Configure the polling interval for status updates. Lower values provide more responsive updates but increase network traffic."
       }
     }
   }

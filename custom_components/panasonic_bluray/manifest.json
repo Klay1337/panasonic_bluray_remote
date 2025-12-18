@@ -6,9 +6,9 @@
   "codeowners": ["@albaintor"],
   "iot_class": "local_polling",
   "integration_type": "device",
-  "loggers": ["panacotta"],
-  "version": "1.0.0",
-  "requirements": ["panacotta==0.2"],
+  "loggers": ["panasonic_bluray"],
+  "version": "2.0.0",
+  "requirements": [],
   "ssdp": [],
   "zeroconf": []
 }
