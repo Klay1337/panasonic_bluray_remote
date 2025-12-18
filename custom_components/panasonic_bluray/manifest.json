@@ -7,7 +7,7 @@
   "iot_class": "local_polling",
   "integration_type": "device",
   "loggers": ["panasonic_bluray"],
-  "version": "2.0.0",
+  "version": "2.0.1",
   "requirements": [],
   "ssdp": [],
   "zeroconf": []
